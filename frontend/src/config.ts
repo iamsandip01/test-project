@@ -1,5 +1,5 @@
 // API URL configuration
-export const API_URL = 'https://test-project-lake-eta.vercel.app/api';
+export const API_URL = 'https://test-project-chi-tan.vercel.app/api';
 
 // Map configuration
 export const MAP_CONFIG = {
