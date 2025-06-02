@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import axios from 'axios';
 import { ref } from 'vue';
-import { API_URL } from '../config';
+import { API_URL } from '../config.ts';
 import router from '../router';
 
 interface User {
