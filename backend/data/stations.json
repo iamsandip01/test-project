@@ -1,0 +1,37 @@
+{
+  "stations": [
+    {
+      "name": "Downtown Charging Hub",
+      "location": {
+        "latitude": 40.7128,
+        "longitude": -74.0060,
+        "address": "123 Main Street, New York, NY 10001"
+      },
+      "status": "active",
+      "powerOutput": 150,
+      "connectorType": "CCS2"
+    },
+    {
+      "name": "Shopping Mall Station",
+      "location": {
+        "latitude": 40.7589,
+        "longitude": -73.9851,
+        "address": "456 Fifth Avenue, New York, NY 10016"
+      },
+      "status": "active",
+      "powerOutput": 50,
+      "connectorType": "Type 2 (Mennekes)"
+    },
+    {
+      "name": "Park & Charge",
+      "location": {
+        "latitude": 40.7829,
+        "longitude": -73.9654,
+        "address": "789 Park Avenue, New York, NY 10021"
+      },
+      "status": "maintenance",
+      "powerOutput": 75,
+      "connectorType": "CHAdeMO"
+    }
+  ]
+}
