@@ -72,7 +72,7 @@ const router = createRouter({
 });
 
 // Navigation guard to check authentication status before routing
-router.beforeEach((to, from, next) => { // 'from' is now used or can be removed if truly not needed
+router.beforeEach((to, _from, next) => { // Added underscore to '_from' to mark as intentionally unused
   const authStore = useAuthStore();
   // Check if the route requires authentication
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);

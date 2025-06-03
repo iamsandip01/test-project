@@ -1,3 +1,4 @@
+
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -358,7 +359,7 @@ const cancelForm = () => {
             <StationMap
               :stations="previewMapStations"
               height="300px"
-              :clickable="false"
+              :clickable="true" @station-click="handleMapClick"
             />
 
             <div v-if="previewMapStations.length === 0" class="mt-4 text-center text-neutral-500 text-sm">
@@ -401,3 +402,18 @@ const cancelForm = () => {
   </div>
 </template>
 
+<style scoped>
+/* Scoped styles for form elements if needed, or rely on global CSS/Tailwind */
+.form-label {
+  @apply block text-sm font-medium text-neutral-700 mb-1;
+}
+
+.form-input,
+.form-select {
+  @apply mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm;
+}
+
+.form-error {
+  @apply mt-1 text-sm text-danger-600;
+}
+</style>

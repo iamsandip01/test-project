@@ -1,3 +1,4 @@
+// frontend/src/stores/auth.ts
 import { defineStore } from 'pinia';
 import axios, { AxiosError } from 'axios'; // Import AxiosError for better type inference
 import { ref } from 'vue';
@@ -117,8 +118,8 @@ export const useAuthStore = defineStore('auth', () => {
       router.push('/dashboard');
       return true;
     } catch (err) {
-      // Use AxiosError for better type safety in error handling
-      if (axios.isAxiosError(err)) {
+      // Explicitly use AxiosError in the instanceof check to make it "read"
+      if (err instanceof AxiosError) {
         // Access specific error response from backend
         error.value = err.response?.data?.message || 'Login failed. Please check your credentials.';
       } else {
@@ -160,7 +161,7 @@ export const useAuthStore = defineStore('auth', () => {
       router.push('/dashboard');
       return true;
     } catch (err) {
-      if (axios.isAxiosError(err)) {
+      if (err instanceof AxiosError) { // Explicitly use AxiosError
         error.value = err.response?.data?.message || 'Registration failed. Please try again.';
       } else {
         error.value = 'An unexpected error occurred during registration.';
