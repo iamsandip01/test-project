@@ -12,17 +12,7 @@ dotenv.config();
 
 // Create Express app instance
 const app = express();
-const PORT = process.env.PORT || 3002; // Use PORT from environment variables or default to 3002
-
-// --- CORS Configuration ---
-// IMPORTANT: Configure CORS before any other routes or middleware that handle requests.
-// This ensures that preflight (OPTIONS) requests are handled correctly.
-
-// Define the allowed origins for your frontend applications.
-// You MUST include:
-// 1. Your local development frontend URL (http://localhost:5173)
-// 2. Your deployed frontend URL on Vercel (e.g., https://your-frontend-app.vercel.app)
-//    Replace 'https://your-deployed-frontend-domain.vercel.app' with your actual frontend's Vercel URL.
+const PORT = process.env.PORT || 3002;
 const allowedOrigins = [
   'http://localhost:5173', // Your frontend's local development server
   'https://your-deployed-frontend-domain.vercel.app' // <-- IMPORTANT: REPLACE THIS with your actual deployed frontend URL on Vercel!
@@ -30,24 +20,19 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    // OR if the origin is in our explicitly allowed list.
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true); // Allow the request
     } else {
-      // Deny the request if the origin is not allowed
       callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Explicitly allow common HTTP methods, including OPTIONS for preflight
-  credentials: true, // Allow cookies and authorization headers to be sent with requests
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,   
 }));
 
-// --- Other Middleware ---
-app.use(express.json()); // Parses incoming requests with JSON payloads
-app.use(express.urlencoded({ extended: true })); // Parses incoming requests with URL-encoded payloads
+app.use(express.json()); 
+app.use(express.urlencoded({ extended: true }));
 
-// Welcome route for basic API check
 app.get('/', (req, res) => {
   res.send('EV Charging Station Management API');
 });
@@ -82,5 +67,5 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Export the app for testing or other purposes (e.g., Vercel's implicit serverless function handling)
+// Export the app for testing or other purposes (e.g., Vercel's   implicit serverless function handling)
 export default app;

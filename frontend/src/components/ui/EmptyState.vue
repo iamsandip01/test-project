@@ -1,9 +1,10 @@
 <script setup lang="ts">
+// Define props for the EmptyState component
 defineProps<{
   title: string;
-  description?: string;
-  actionLabel?: string;
-  actionLink?: string;
+  description?: string; // Optional description text
+  actionLabel?: string; // Optional label for an action button/link
+  actionLink?: string; // Optional link for the action button
 }>();
 </script>
 

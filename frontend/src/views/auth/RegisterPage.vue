@@ -16,14 +16,19 @@ const errors = ref({
   email: '',
   password: '',
   confirmPassword: '',
-  form: ''
+  form: '' // General form error message
 });
 
 const isLoading = computed(() => authStore.loading);
 const errorMessage = computed(() => authStore.error);
 
-const validateForm = () => {
+/**
+ * Validates the registration form fields.
+ * @returns {boolean} True if the form is valid, false otherwise.
+ */
+const validateForm = (): boolean => {
   let isValid = true;
+  // Reset all error messages
   errors.value = {
     name: '',
     email: '',
@@ -32,12 +37,14 @@ const validateForm = () => {
     form: ''
   };
 
-  if (!name.value) {
+  // Name validation
+  if (!name.value.trim()) { // Use .trim() to check for empty or just whitespace
     errors.value.name = 'Name is required';
     isValid = false;
   }
 
-  if (!email.value) {
+  // Email validation
+  if (!email.value.trim()) {
     errors.value.email = 'Email is required';
     isValid = false;
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
@@ -45,6 +52,7 @@ const validateForm = () => {
     isValid = false;
   }
 
+  // Password validation
   if (!password.value) {
     errors.value.password = 'Password is required';
     isValid = false;
@@ -53,6 +61,7 @@ const validateForm = () => {
     isValid = false;
   }
 
+  // Confirm Password validation
   if (password.value !== confirmPassword.value) {
     errors.value.confirmPassword = 'Passwords do not match';
     isValid = false;
@@ -61,9 +70,16 @@ const validateForm = () => {
   return isValid;
 };
 
+/**
+ * Handles the form submission for registration.
+ */
 const handleSubmit = async () => {
-  if (!validateForm()) return;
+  if (!validateForm()) {
+    // If validation fails, stop submission
+    return;
+  }
 
+  // Attempt to register using the auth store
   const success = await authStore.register({
     name: name.value,
     email: email.value,
@@ -71,8 +87,10 @@ const handleSubmit = async () => {
   });
 
   if (success) {
+    // If registration is successful, redirect to dashboard
     router.push('/dashboard');
   } else {
+    // If registration fails, display the error message from the store
     errors.value.form = errorMessage.value || 'Registration failed. Please try again.';
   }
 };
@@ -92,12 +110,12 @@ const handleSubmit = async () => {
           </router-link>
         </p>
       </div>
-      
+
       <form class="mt-8 space-y-6" @submit.prevent="handleSubmit">
         <div v-if="errors.form" class="bg-danger-50 text-danger-700 p-3 rounded-md text-sm">
           {{ errors.form }}
         </div>
-        
+
         <div class="space-y-4">
           <div>
             <label for="name" class="block text-sm font-medium text-neutral-700 mb-1">Full name</label>
@@ -112,7 +130,7 @@ const handleSubmit = async () => {
             />
             <p v-if="errors.name" class="mt-1 text-sm text-danger-600">{{ errors.name }}</p>
           </div>
-          
+
           <div>
             <label for="email" class="block text-sm font-medium text-neutral-700 mb-1">Email address</label>
             <input
@@ -126,7 +144,7 @@ const handleSubmit = async () => {
             />
             <p v-if="errors.email" class="mt-1 text-sm text-danger-600">{{ errors.email }}</p>
           </div>
-          
+
           <div>
             <label for="password" class="block text-sm font-medium text-neutral-700 mb-1">Password</label>
             <input
@@ -140,7 +158,7 @@ const handleSubmit = async () => {
             />
             <p v-if="errors.password" class="mt-1 text-sm text-danger-600">{{ errors.password }}</p>
           </div>
-          
+
           <div>
             <label for="confirm-password" class="block text-sm font-medium text-neutral-700 mb-1">Confirm Password</label>
             <input

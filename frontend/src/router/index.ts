@@ -32,31 +32,31 @@ const router = createRouter({
       path: '/dashboard',
       name: 'dashboard',
       component: DashboardPage,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true } // Requires authentication to access
     },
     {
       path: '/stations',
       name: 'stations',
       component: StationListPage,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true } // Requires authentication
     },
     {
       path: '/stations/new',
       name: 'station-new',
       component: StationFormPage,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true } // Requires authentication
     },
     {
       path: '/stations/:id',
       name: 'station-detail',
       component: StationDetailPage,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true } // Requires authentication
     },
     {
       path: '/stations/:id/edit',
       name: 'station-edit',
       component: StationFormPage,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true } // Requires authentication
     },
     {
       path: '/map',
@@ -64,21 +64,24 @@ const router = createRouter({
       component: MapPage
     },
     {
-      path: '/:pathMatch(.*)*',
+      path: '/:pathMatch(.*)*', // Catch-all route for 404
       name: 'not-found',
       component: NotFoundPage
     }
   ]
 });
 
-//some changes 
+// Navigation guard to check authentication status before routing
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
+  // Check if the route requires authentication
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
 
-  if (requiresAuth && !authStore.isLoggedIn) {
+  if (requiresAuth && !authStore.isLoggedIn()) { // Use .isLoggedIn() as it's a function
+    // If authentication is required but user is not logged in, redirect to login page
     next('/login');
   } else {
+    // Otherwise, allow navigation
     next();
   }
 });

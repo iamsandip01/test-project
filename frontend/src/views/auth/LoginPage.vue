@@ -11,20 +11,26 @@ const password = ref('');
 const errors = ref({
   email: '',
   password: '',
-  form: ''
+  form: '' // General form error message
 });
 
 const isLoading = computed(() => authStore.loading);
 const errorMessage = computed(() => authStore.error);
 
-const validateForm = () => {
+/**
+ * Validates the login form fields.
+ * @returns {boolean} True if the form is valid, false otherwise.
+ */
+const validateForm = (): boolean => {
   let isValid = true;
+  // Reset all error messages
   errors.value = {
     email: '',
     password: '',
     form: ''
   };
 
+  // Email validation
   if (!email.value) {
     errors.value.email = 'Email is required';
     isValid = false;
@@ -33,6 +39,7 @@ const validateForm = () => {
     isValid = false;
   }
 
+  // Password validation
   if (!password.value) {
     errors.value.password = 'Password is required';
     isValid = false;
@@ -41,17 +48,26 @@ const validateForm = () => {
   return isValid;
 };
 
+/**
+ * Handles the form submission for login.
+ */
 const handleSubmit = async () => {
-  if (!validateForm()) return;
+  if (!validateForm()) {
+    // If validation fails, stop submission
+    return;
+  }
 
+  // Attempt to log in using the auth store
   const success = await authStore.login({
     email: email.value,
     password: password.value
   });
 
   if (success) {
+    // If login is successful, redirect to dashboard
     router.push('/dashboard');
   } else {
+    // If login fails, display the error message from the store
     errors.value.form = errorMessage.value || 'Login failed. Please try again.';
   }
 };
@@ -71,12 +87,12 @@ const handleSubmit = async () => {
           </router-link>
         </p>
       </div>
-      
+
       <form class="mt-8 space-y-6" @submit.prevent="handleSubmit">
         <div v-if="errors.form" class="bg-danger-50 text-danger-700 p-3 rounded-md text-sm">
           {{ errors.form }}
         </div>
-        
+
         <div class="rounded-md shadow-sm -space-y-px">
           <div class="mb-4">
             <label for="email" class="block text-sm font-medium text-neutral-700 mb-1">Email address</label>

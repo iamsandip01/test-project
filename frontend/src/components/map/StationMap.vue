@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { MAP_CONFIG, STATION_STATUS } from '../../config';
-import type { Station } from '../../stores/stations';
+import type { Station } from '../../stores/stations'; // Ensure Station is imported as a type
 import 'leaflet/dist/leaflet.css';
 
 // Import Leaflet dynamically to prevent SSR issues
-let L: any;
+let L: any; // Leaflet library instance
 
 interface Props {
   stations: Station[];
@@ -21,72 +21,86 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits(['station-click']);
 
 const mapContainer = ref<HTMLElement | null>(null);
-const mapInstance = ref<any>(null);
-const markers = ref<any[]>([]);
+const mapInstance = ref<any>(null); // Leaflet map instance
+const markers = ref<any[]>([]); // Array to store Leaflet marker instances
 
 onMounted(async () => {
+  // Dynamically import Leaflet to ensure it's loaded client-side
   L = await import('leaflet');
   initMap();
 });
 
 onUnmounted(() => {
+  // Clean up map instance when component is unmounted
   if (mapInstance.value) {
     mapInstance.value.remove();
   }
 });
 
+// Watch for changes in the stations prop and update markers accordingly
 watch(() => props.stations, () => {
   if (mapInstance.value) {
     updateMarkers();
   }
-}, { deep: true });
+}, { deep: true }); // Deep watch is important for nested changes in station data
 
+/**
+ * Initializes the Leaflet map.
+ */
 const initMap = () => {
-  if (!mapContainer.value) return;
-  
-  // Create map instance
+  if (!mapContainer.value) {
+    console.error('Map container element not found.');
+    return;
+  }
+
+  // Create map instance, setting default center and zoom
   mapInstance.value = L.map(mapContainer.value).setView(
-    MAP_CONFIG.defaultCenter, 
+    MAP_CONFIG.defaultCenter,
     MAP_CONFIG.defaultZoom
   );
-  
-  // Add tile layer
+
+  // Add OpenStreetMap tile layer
   L.tileLayer(MAP_CONFIG.tileLayer, {
     attribution: MAP_CONFIG.attribution
   }).addTo(mapInstance.value);
-  
-  // Add markers for stations
+
+  // Initial marker update
   updateMarkers();
-  
-  // Resize handling
+
+  // Add event listener for window resize to invalidate map size
   window.addEventListener('resize', () => {
     if (mapInstance.value) {
-      mapInstance.value.invalidateSize();
+      mapInstance.value.invalidateSize(); // Recalculates map size and position
     }
   });
 };
 
+/**
+ * Updates markers on the map based on the current stations prop.
+ * Clears existing markers and adds new ones.
+ */
 const updateMarkers = () => {
-  // Clear existing markers
+  // Remove all existing markers from the map
   markers.value.forEach(marker => marker.remove());
-  markers.value = [];
-  
-  if (!props.stations.length) return;
-  
-  // Add new markers
-  const bounds = L.latLngBounds();
-  
+  markers.value = []; // Clear the markers array
+
+  if (!props.stations.length) return; // If no stations, do nothing
+
+  const bounds = L.latLngBounds(); // Create a LatLngBounds object to fit map to markers
+
+  // Iterate over each station to create and add a marker
   props.stations.forEach(station => {
+    // Determine marker color based on station status
     const statusObj = STATION_STATUS.find(s => s.value === station.status);
-    const statusColor = statusObj?.color.replace('bg-', '') || 'neutral-500';
-    
-    // Convert tailwind color to CSS variable
-    let markerColor;
-    if (statusColor.includes('primary')) markerColor = '#0066cc';
-    else if (statusColor.includes('secondary')) markerColor = '#00cc66';
-    else if (statusColor.includes('danger')) markerColor = '#cc3300';
-    else markerColor = '#6c757d';
-    
+    const statusColorClass = statusObj?.color.replace('bg-', '') || 'neutral-500'; // e.g., 'primary-500'
+
+    let markerColor: string;
+    if (statusColorClass.includes('primary')) markerColor = '#0066cc'; // Example primary color
+    else if (statusColorClass.includes('secondary')) markerColor = '#00cc66'; // Example secondary color
+    else if (statusColorClass.includes('danger')) markerColor = '#cc3300'; // Example danger color
+    else markerColor = '#6c757d'; // Default neutral color
+
+    // Create a custom DivIcon for the marker (using SVG for the pin, and a small circle for status)
     const markerIcon = L.divIcon({
       html: `
         <div class="relative">
@@ -96,17 +110,18 @@ const updateMarkers = () => {
           <div class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white" style="background-color: ${markerColor}"></div>
         </div>
       `,
-      className: 'custom-div-icon',
-      iconSize: [30, 42],
-      iconAnchor: [15, 42]
+      className: 'custom-div-icon', // Custom class for styling
+      iconSize: [30, 42], // Size of the icon
+      iconAnchor: [15, 42] // Point of the icon which corresponds to the marker's location
     });
-    
+
+    // Create and add the marker to the map
     const marker = L.marker([station.location.latitude, station.location.longitude], {
       icon: markerIcon,
-      title: station.name
+      title: station.name // Title for accessibility/hover
     }).addTo(mapInstance.value);
-    
-    // Create popup content
+
+    // Create popup content with station details
     const popupContent = `
       <div class="p-2">
         <h3 class="font-semibold">${station.name}</h3>
@@ -115,30 +130,31 @@ const updateMarkers = () => {
         ${props.clickable ? '<p class="text-sm text-primary-500 mt-1 cursor-pointer station-details">View Details</p>' : ''}
       </div>
     `;
-    
-    marker.bindPopup(popupContent);
-    
-    // Add click handler for view details link
+
+    marker.bindPopup(popupContent); // Bind the popup to the marker
+
+    // Add click handler for "View Details" link inside the popup
     if (props.clickable) {
       marker.on('popupopen', () => {
+        // Use setTimeout to ensure the DOM element is rendered before querying
         setTimeout(() => {
           const detailsLink = document.querySelector('.station-details');
           if (detailsLink) {
             detailsLink.addEventListener('click', () => {
-              emit('station-click', station);
+              emit('station-click', station); // Emit event with station data
             });
           }
-        }, 10);
+        }, 10); // Small delay to allow popup DOM to render
       });
     }
-    
-    bounds.extend([station.location.latitude, station.location.longitude]);
-    markers.value.push(marker);
+
+    bounds.extend([station.location.latitude, station.location.longitude]); // Extend bounds to include this marker
+    markers.value.push(marker); // Store marker instance
   });
-  
-  // Fit bounds if we have stations
+
+  // Fit map bounds to show all markers if there are any
   if (markers.value.length > 0) {
-    mapInstance.value.fitBounds(bounds, { padding: [50, 50] });
+    mapInstance.value.fitBounds(bounds, { padding: [50, 50] }); // Add padding around the bounds
   }
 };
 </script>
@@ -159,6 +175,7 @@ const updateMarkers = () => {
 </template>
 
 <style scoped>
+/* Deep selectors to style Leaflet's generated elements */
 :deep(.leaflet-popup-content-wrapper) {
   border-radius: 0.5rem;
 }
@@ -171,5 +188,11 @@ const updateMarkers = () => {
 :deep(.leaflet-popup-close-button) {
   top: 8px;
   right: 8px;
+}
+
+/* Custom icon styling */
+:deep(.custom-div-icon) {
+  background: none !important; /* Remove default Leaflet background */
+  border: none !important; /* Remove default Leaflet border */
 }
 </style>
