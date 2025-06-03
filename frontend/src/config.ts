@@ -1,5 +1,5 @@
 // API URL configuration
-export const API_URL = 'https://test-project-lyart-pi.vercel.app/api';
+export const API_URL = 'https://test-project-b.onrender.com/api';
 
 // Map configuration
 export const MAP_CONFIG = {
