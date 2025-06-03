@@ -121,6 +121,7 @@ const validateForm = (): boolean => {
   }
 
   // Latitude validation
+  // Check for 0 or NaN, and then range
   if (stationData.value.location.latitude === 0 || isNaN(stationData.value.location.latitude)) {
     formErrors.value.latitude = 'Latitude is required and must be a number';
     isValid = false;
@@ -130,6 +131,7 @@ const validateForm = (): boolean => {
   }
 
   // Longitude validation
+  // Check for 0 or NaN, and then range
   if (stationData.value.location.longitude === 0 || isNaN(stationData.value.location.longitude)) {
     formErrors.value.longitude = 'Longitude is required and must be a number';
     isValid = false;
@@ -139,6 +141,7 @@ const validateForm = (): boolean => {
   }
 
   // Power Output validation
+  // Check for 0 or NaN, and then positive value
   if (stationData.value.powerOutput <= 0 || isNaN(stationData.value.powerOutput)) {
     formErrors.value.powerOutput = 'Power output is required and must be a positive number';
     isValid = false;
@@ -177,13 +180,14 @@ const handleSubmit = async () => {
       // Create new station
       const newStation = await stationsStore.createStation(stationData.value);
       if (newStation) {
+        // If creation is successful, redirect to the detail page of the new station
+        router.push(`/stations/${newStation._id}`);
         success = true;
       }
     }
 
-    if (success) {
-      router.push('/stations'); // Redirect to stations list on success
-    } else {
+    // This block is now only for general success/failure if not redirected immediately
+    if (!success) {
       // If store action returns null (failure), display error from store
       formErrors.value.form = stationsStore.error || 'Operation failed. Please try again.';
     }
@@ -201,6 +205,15 @@ const handleMapClick = (latlng: { lat: number; lng: number }) => {
   stationData.value.location.longitude = latlng.lng;
   // Optionally, you could try to reverse geocode the address here
 };
+
+// Function to cancel form submission and navigate back
+const cancelForm = () => {
+  if (isEditMode.value) {
+    router.push(`/stations/${route.params.id}`);
+  } else {
+    router.push('/stations');
+  }
+};
 </script>
 
 <template>
@@ -209,97 +222,182 @@ const handleMapClick = (latlng: { lat: number; lng: number }) => {
 
     <LoadingSpinner v-if="isLoading" />
 
-    <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <div class="card p-6">
-        <form @submit.prevent="handleSubmit" class="space-y-6">
-          <div v-if="formErrors.form" class="bg-danger-50 text-danger-700 p-3 rounded-md text-sm">
+    <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div class="lg:col-span-2">
+        <form @submit.prevent="handleSubmit" class="bg-white rounded-lg shadow-md p-6">
+          <div v-if="formErrors.form" class="mb-6 bg-danger-50 text-danger-700 p-4 rounded-md">
             {{ formErrors.form }}
           </div>
 
-          <div>
-            <label for="name" class="form-label">Station Name</label>
-            <input id="name" v-model="stationData.name" type="text" class="form-input"
-              :class="{ 'border-danger-500': formErrors.name }" />
-            <p v-if="formErrors.name" class="form-error">{{ formErrors.name }}</p>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-6">
             <div>
-              <label for="latitude" class="form-label">Latitude</label>
-              <input id="latitude" v-model.number="stationData.location.latitude" type="number" step="any"
-                class="form-input" :class="{ 'border-danger-500': formErrors.latitude }" />
-              <p v-if="formErrors.latitude" class="form-error">{{ formErrors.latitude }}</p>
+              <label for="name" class="block text-sm font-medium text-neutral-700 mb-1">Station Name *</label>
+              <input
+                id="name"
+                v-model="stationData.name"
+                type="text"
+                class="form-input"
+                :class="{ 'border-danger-500 focus:ring-danger-500 focus:border-danger-500': formErrors.name }"
+              />
+              <p v-if="formErrors.name" class="mt-1 text-sm text-danger-600">{{ formErrors.name }}</p>
             </div>
+
             <div>
-              <label for="longitude" class="form-label">Longitude</label>
-              <input id="longitude" v-model.number="stationData.location.longitude" type="number" step="any"
-                class="form-input" :class="{ 'border-danger-500': formErrors.longitude }" />
-              <p v-if="formErrors.longitude" class="form-error">{{ formErrors.longitude }}</p>
+              <h3 class="text-base font-medium text-neutral-800 mb-2">Location</h3>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label for="latitude" class="block text-sm font-medium text-neutral-700 mb-1">Latitude *</label>
+                  <input
+                    id="latitude"
+                    v-model.number="stationData.location.latitude"
+                    type="number"
+                    step="0.000001"
+                    min="-90"
+                    max="90"
+                    class="form-input"
+                    :class="{ 'border-danger-500 focus:ring-danger-500 focus:border-danger-500': formErrors.latitude }"
+                  />
+                  <p v-if="formErrors.latitude" class="mt-1 text-sm text-danger-600">{{ formErrors.latitude }}</p>
+                </div>
+
+                <div>
+                  <label for="longitude" class="block text-sm font-medium text-neutral-700 mb-1">Longitude *</label>
+                  <input
+                    id="longitude"
+                    v-model.number="stationData.location.longitude"
+                    type="number"
+                    step="0.000001"
+                    min="-180"
+                    max="180"
+                    class="form-input"
+                    :class="{ 'border-danger-500 focus:ring-danger-500 focus:border-danger-500': formErrors.longitude }"
+                  />
+                  <p v-if="formErrors.longitude" class="mt-1 text-sm text-danger-600">{{ formErrors.longitude }}</p>
+                </div>
+              </div>
+
+              <div>
+                <label for="address" class="block text-sm font-medium text-neutral-700 mb-1">Address (Optional)</label>
+                <input
+                  id="address"
+                  v-model="stationData.location.address"
+                  type="text"
+                  class="form-input"
+                />
+              </div>
             </div>
-          </div>
-          <div>
-            <label for="address" class="form-label">Address (Optional)</label>
-            <input id="address" v-model="stationData.location.address" type="text" class="form-input" />
-          </div>
 
-          <div>
-            <label for="status" class="form-label">Status</label>
-            <select id="status" v-model="stationData.status" class="form-select">
-              <option v-for="statusOpt in STATION_STATUS" :key="statusOpt.value" :value="statusOpt.value">
-                {{ statusOpt.label }}
-              </option>
-            </select>
-          </div>
+            <div>
+              <label for="status" class="block text-sm font-medium text-neutral-700 mb-1">Status</label>
+              <select id="status" v-model="stationData.status" class="form-input">
+                <option v-for="status in STATION_STATUS" :key="status.value" :value="status.value">
+                  {{ status.label }}
+                </option>
+              </select>
+            </div>
 
-          <div>
-            <label for="powerOutput" class="form-label">Power Output (kW)</label>
-            <input id="powerOutput" v-model.number="stationData.powerOutput" type="number" step="0.1"
-              class="form-input" :class="{ 'border-danger-500': formErrors.powerOutput }" />
-            <p v-if="formErrors.powerOutput" class="form-error">{{ formErrors.powerOutput }}</p>
-          </div>
+            <div>
+              <label for="powerOutput" class="block text-sm font-medium text-neutral-700 mb-1">Power Output (kW) *</label>
+              <input
+                id="powerOutput"
+                v-model.number="stationData.powerOutput"
+                type="number"
+                min="0"
+                step="0.1"
+                class="form-input"
+                :class="{ 'border-danger-500 focus:ring-danger-500 focus:border-danger-500': formErrors.powerOutput }"
+              />
+              <p v-if="formErrors.powerOutput" class="mt-1 text-sm text-danger-600">{{ formErrors.powerOutput }}</p>
+            </div>
 
-          <div>
-            <label for="connectorType" class="form-label">Connector Type</label>
-            <select id="connectorType" v-model="stationData.connectorType" class="form-select"
-              :class="{ 'border-danger-500': formErrors.connectorType }">
-              <option value="" disabled>Select a connector type</option>
-              <option v-for="type in CONNECTOR_TYPES" :key="type" :value="type">
-                {{ type }}
-              </option>
-            </select>
-            <p v-if="formErrors.connectorType" class="form-error">{{ formErrors.connectorType }}</p>
-          </div>
+            <div>
+              <label for="connectorType" class="block text-sm font-medium text-neutral-700 mb-1">Connector Type *</label>
+              <select
+                id="connectorType"
+                v-model="stationData.connectorType"
+                class="form-input"
+                :class="{ 'border-danger-500 focus:ring-danger-500 focus:border-danger-500': formErrors.connectorType }"
+              >
+                <option value="" disabled>Select connector type</option>
+                <option v-for="type in CONNECTOR_TYPES" :key="type" :value="type">
+                  {{ type }}
+                </option>
+              </select>
+              <p v-if="formErrors.connectorType" class="mt-1 text-sm text-danger-600">{{ formErrors.connectorType }}</p>
+            </div>
 
-          <div>
-            <button type="submit" class="btn btn-primary w-full" :disabled="isSubmitting">
-              <span v-if="isSubmitting" class="inline-block animate-spin mr-2">↻</span>
-              {{ submitButtonText }}
-            </button>
+            <div class="flex justify-end space-x-3 pt-4">
+              <button
+                type="button"
+                @click="cancelForm"
+                class="btn btn-secondary"
+                :disabled="isSubmitting"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                class="btn btn-primary"
+                :disabled="isSubmitting"
+              >
+                <span v-if="isSubmitting" class="inline-block animate-spin mr-2">↻</span>
+                <span v-if="isSubmitting">Saving...</span>
+                <span v-else>{{ submitButtonText }}</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>
 
       <div>
-        <h2 class="text-xl font-semibold text-neutral-800 mb-4">Location Preview</h2>
-        <StationMap :stations="previewMapStations" height="400px" :clickable="true" @station-click="handleMapClick" />
-        <p class="text-sm text-neutral-600 mt-2">Click on the map to set latitude and longitude.</p>
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+          <h2 class="text-lg font-semibold p-4 border-b border-neutral-200">Location Preview</h2>
+
+          <div class="p-4">
+            <StationMap
+              :stations="previewMapStations"
+              height="300px"
+              :clickable="false"
+            />
+
+            <div v-if="previewMapStations.length === 0" class="mt-4 text-center text-neutral-500 text-sm">
+              Enter latitude and longitude to see a preview
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+          <h2 class="text-lg font-semibold mb-4">Help & Tips</h2>
+
+          <div class="space-y-4 text-sm text-neutral-600">
+            <div>
+              <h3 class="font-medium text-neutral-800">Station Name</h3>
+              <p>Use a clear, descriptive name that identifies the location or purpose of the charging station.</p>
+            </div>
+
+            <div>
+              <h3 class="font-medium text-neutral-800">Location</h3>
+              <p>Enter precise latitude and longitude coordinates for accurate mapping. The address field is optional but helpful for users.</p>
+            </div>
+
+            <div>
+              <h3 class="font-medium text-neutral-800">Power Output</h3>
+              <p>Enter the maximum power output in kilowatts (kW) that the charging station can provide.</p>
+            </div>
+
+            <div>
+              <h3 class="font-medium text-neutral-800">Status</h3>
+              <ul class="list-disc list-inside">
+                <li><span class="text-secondary-600 font-medium">Active:</span> Station is operational and available for use</li>
+                <li><span class="text-danger-600 font-medium">Inactive:</span> Station is not operational</li>
+                <li><span class="text-neutral-600 font-medium">Maintenance:</span> Station is temporarily unavailable for maintenance</li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
-<style scoped>
-/* Scoped styles for form elements if needed, or rely on global CSS/Tailwind */
-.form-label {
-  @apply block text-sm font-medium text-neutral-700 mb-1;
-}
-
-.form-input,
-.form-select {
-  @apply mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm;
-}
-
-.form-error {
-  @apply mt-1 text-sm text-danger-600;
-}
-</style>

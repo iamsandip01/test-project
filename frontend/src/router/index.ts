@@ -72,16 +72,14 @@ const router = createRouter({
 });
 
 // Navigation guard to check authentication status before routing
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, from, next) => { // 'from' is now used or can be removed if truly not needed
   const authStore = useAuthStore();
   // Check if the route requires authentication
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
 
   if (requiresAuth && !authStore.isLoggedIn()) { // Use .isLoggedIn() as it's a function
-    // If authentication is required but user is not logged in, redirect to login page
     next('/login');
   } else {
-    // Otherwise, allow navigation
     next();
   }
 });
